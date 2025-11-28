@@ -1,0 +1,41 @@
+﻿<UserControl x:Name="Search" x:Class="Ark.SearchControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:Ark"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <Grid Background="#FFE5E5E5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0" VerticalAlignment="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox HorizontalAlignment="Stretch" Margin="0,0,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Center" Grid.Row="1"/>
+            <Button Content="Поиск" HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Center" Width="55" Grid.Column="1"/>
+        </Grid>
+        <DataGrid Grid.Row="1" ItemsSource="{Binding DataItems, ElementName=Search}"/>
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Button Content="Previous" Command="{Binding PreviousPageCommand, ElementName=Search}" Width="100" Height="30" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding CurrentPage, ElementName=Search}" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="50" />
+            <TextBlock Text="/" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Center" />
+            <TextBlock Text="{Binding TotalPages, ElementName=Search}" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Left" MinWidth="50" />
+            <Button Content="Next" Command="{Binding NextPageCommand, ElementName=Search}" Grid.Column="4" Height="30" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Grid>
+        <Button Grid.Row="3" Content="Скачать отмеченные на данной странице" HorizontalAlignment="Right" Margin="0,0,0,0" VerticalAlignment="Top" Width="250"/>
+    </Grid>
+</UserControl>
