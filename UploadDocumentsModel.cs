@@ -1,42 +1,56 @@
 ﻿using Microsoft.Win32;
 using System.Collections.Generic;
-using System.IO;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace Ark
 {
-    public class UploadDocumentsModel
+    public class UploadDocumentsModel : INotifyPropertyChanged
     {
         public UploadDocumentsModel()
         {
             AddFilesToQueue = new RelayCommand((_) => AddFiles(), (_) => CanAddFiles());
         }
 
+        public ObservableCollection<LoadingDocument> Queue {  get; set; } = new ObservableCollection<LoadingDocument>();
+
         public ICommand AddFilesToQueue { get; }
 
-        private async Task<List<long>> AddFiles()
+        string[] ChooseFiles()
         {
-            var dialog = new OpenFileDialog();
-            dialog.Filter = "Документы Word|*.docx, *.doc";
-            dialog.Multiselect = true;
-            if (dialog.ShowDialog() != true)
-                return new List<long>();
-            var docs = new List<Models.Document>();
-            foreach (string fileName in dialog.FileNames)
+            var dialog = new OpenFileDialog
             {
-                docs.Add(new Models.Document()
-                {
-                    Bytes = File.ReadAllBytes(fileName),
-                    Name = Path.GetFileName(fileName),
-                });
-            }
-            return await DatabaseContext.Create(docs);
+                Filter = "Документы Word|*.docx",
+                Multiselect = true
+            };
+            if (dialog.ShowDialog() != true)
+                return Array.Empty<string>();
+            return dialog.FileNames;
+        }
+
+        void AddFiles()
+        {
+            foreach (string fileName in ChooseFiles())
+            {
+                var cur = new LoadingDocument(fileName);
+                _ = cur.Load();
+                Queue.Add(cur);
+            }            
         }
 
         private bool CanAddFiles()
         {
             return true;
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

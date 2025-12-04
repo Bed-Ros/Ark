@@ -1,26 +1,62 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using System.ComponentModel;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Ark
 {
-    public class LoadingDocument
+    public class LoadingDocument : INotifyPropertyChanged
     {
-        public string Name { get; }
-
-        string status = "Загружается...";
-        public string Status { get; }
-
+        string name = "";
+        public string Name
+        {
+            get { return name; }
+            private set { name = value; OnPropertyChanged(nameof(Name)); }
+        }
+        string status = "";
+        public string Status
+        {
+            get { return status; }
+            private set { status = value; OnPropertyChanged(nameof(Status)); }
+        }
+        Exception? exception;
+        public Exception? Exception
+        {
+            get { return exception; }
+            private set { exception = value; OnPropertyChanged(nameof(Exception)); }
+        }
+        readonly string Filepath;
         public LoadingDocument(string filePath)
         {
-            Name = name;
+            Filepath = filePath;
         }
 
-        public void Load()
+        public async Task Load()
         {
+            try
+            {
+                Status = "Подготовка";
+                Name = Path.GetFileName(Filepath);
+                var doc = new Models.Document()
+                {
+                    Bytes = File.ReadAllBytes(Filepath),
+                    Name = Name,
+                };
+                Status = "Загрузка";
+                await DatabaseContext.Create(doc);
+                Status = "Готово";
+            }
+            catch (Exception e)
+            {
+                Status = "Ошибка";
+                Exception = e;
+            }
+        }
 
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
