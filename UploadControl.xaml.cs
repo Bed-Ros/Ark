@@ -15,9 +15,6 @@ using System.Windows.Shapes;
 
 namespace Ark
 {
-    /// <summary>
-    /// Interaction logic for UploadControl.xaml
-    /// </summary>
     public partial class UploadControl : UserControl
     {
         public UploadControl()

@@ -1,10 +1,7 @@
 ﻿using Microsoft.Win32;
-using System.Collections.Generic;
+using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace Ark
@@ -16,7 +13,7 @@ namespace Ark
             AddFilesToQueue = new RelayCommand((_) => AddFiles(), (_) => CanAddFiles());
         }
 
-        public ObservableCollection<LoadingDocument> Queue {  get; set; } = new ObservableCollection<LoadingDocument>();
+        public ObservableCollection<LoadingDocument> Queue { get; set; } = new ObservableCollection<LoadingDocument>();
 
         public ICommand AddFilesToQueue { get; }
 
@@ -34,17 +31,26 @@ namespace Ark
 
         void AddFiles()
         {
-            foreach (string fileName in ChooseFiles())
+            try
             {
-                var cur = new LoadingDocument(fileName);
-                _ = cur.Load();
-                Queue.Add(cur);
-            }            
+                canAddFiles = false;
+                foreach (string fileName in ChooseFiles())
+                {
+                    var cur = new LoadingDocument(fileName);
+                    _ = cur.Load();
+                    Queue.Add(cur);
+                }
+            }
+            finally
+            {
+                canAddFiles = true;
+            }
         }
 
-        private bool CanAddFiles()
+        bool canAddFiles { get; set; } = true;
+        bool CanAddFiles()
         {
-            return true;
+            return canAddFiles;
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

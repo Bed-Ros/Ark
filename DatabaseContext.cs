@@ -15,37 +15,29 @@ namespace Ark
         //Создание
         public static async Task<long> Create(Document doc)
         {
-            return (await Create(new Document[] { doc }))[0];
-        }
-        public static async Task<List<long>> Create(IEnumerable<Document> docs)
-        {
             var insertSql =
                 $@"Insert into Files (Name, Bytes)
-                values (@{nameof(Document.Name)}, @{nameof(Document.Bytes)})
-                returning Id";
+                output inserted.Id
+                values (@{nameof(Document.Name)}, @{nameof(Document.Bytes)})";
 
-            using (var connection = new SqlConnection())
+            using (var connection = new SqlConnection(Properties.Settings.Default.ConnectionString))
             {
                 connection.Open();
                 using (var transaction = connection.BeginTransaction())
                 {
                     try
                     {
-                        var result = (await connection.QueryAsync<long>(insertSql, docs)).ToList();
-                        var audits = new List<Audit>();
-                        foreach (long id in result)
-                        {
-                            var newValues = GetDocument(connection, transaction, id);
-                            audits.Add(new Audit()
+                        var insertedId = await connection.QueryFirstAsync<long>(insertSql, doc, transaction);
+                        var newValues = await GetDocument(connection, transaction, insertedId);
+                        await Create(connection, transaction,
+                            new Audit()
                             {
                                 State = nameof(AuditState.Create),
                                 TableName = "Files",
                                 NewValues = JsonSerializer.Serialize(newValues),
                             });
-                        }
-                        await Create(connection, transaction, audits);
                         transaction.Commit();
-                        return result;
+                        return insertedId;
                     }
                     catch (Exception)
                     {
@@ -59,7 +51,7 @@ namespace Ark
         //Запрос одного
         public static async Task<Document> GetDocument(long id)
         {
-            using (var connection = new SqlConnection())
+            using (var connection = new SqlConnection(Properties.Settings.Default.ConnectionString))
             {
                 return await GetDocument(connection, null, id);
             }
@@ -78,7 +70,7 @@ namespace Ark
         {
             var sql = "Select count(*) From Files";
 
-            using (var connection = new SqlConnection())
+            using (var connection = new SqlConnection(Properties.Settings.Default.ConnectionString))
             {
                 return connection.ExecuteScalar<long>(sql);
             }
@@ -93,7 +85,7 @@ namespace Ark
                 Offset {(num - 1) * Properties.Settings.Default.ItemsPerPage} rows
                 Fetch next {Properties.Settings.Default.ItemsPerPage} rows only";
 
-            using (var connection = new SqlConnection())
+            using (var connection = new SqlConnection(Properties.Settings.Default.ConnectionString))
             {
                 return (await connection.QueryAsync<Document>(sql)).ToList();
             }
@@ -103,21 +95,20 @@ namespace Ark
         //Аудит
         static async Task Create(SqlConnection connection, SqlTransaction t, Audit audit)
         {
-            await Create(connection, t, new List<Audit>() { audit });
-        }
-        static async Task Create(SqlConnection connection, SqlTransaction t, List<Audit> audits)
-        {
+            audit.DateTime = DateTime.Now;
+            audit.UserName = Environment.UserName;
+
             var sql =
                 $@"Insert into Audit (UserName, DateTime, TableName, State, OldValues, NewValues)
                 values (
-                    {Environment.UserName}, 
-                    {DateTime.Now},
+                    @{nameof(Audit.UserName)}, 
+                    @{nameof(Audit.DateTime)}, 
                     @{nameof(Audit.TableName)},
                     @{nameof(Audit.State)},
                     @{nameof(Audit.OldValues)},
                     @{nameof(Audit.NewValues)})";
 
-            await connection.ExecuteAsync(sql, audits, t);
+            await connection.ExecuteAsync(sql, audit, t);
         }
     }
 }

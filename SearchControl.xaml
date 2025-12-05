@@ -5,8 +5,11 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Ark"
              mc:Ignorable="d" 
-             d:DesignHeight="181" d:DesignWidth="800">
-    <Grid Background="#FFE5E5E5">
+             d:DesignHeight="181" d:DesignWidth="490.38">
+    <UserControl.DataContext>
+        <local:SearchDocumentsModel/>
+    </UserControl.DataContext>
+    <Grid Background="#FFFFFFFF">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
@@ -18,11 +21,16 @@
                 <ColumnDefinition/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBox HorizontalAlignment="Stretch" Margin="0,0,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Center" Grid.Row="1"/>
-            <Button Content="Поиск" HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Center" Width="55" Grid.Column="1"/>
+            <TextBox HorizontalAlignment="Stretch" Margin="3,3,3,3" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Row="1"/>
+            <Button Content="Поиск" HorizontalAlignment="Stretch" Margin="3,3,3,3" VerticalAlignment="Center" Width="55" Grid.Column="1"/>
         </Grid>
-        <DataGrid Grid.Row="1" ItemsSource="{Binding DataItems}"/>
-        <Grid Grid.Row="2">
+        <DataGrid Grid.Row="1" ItemsSource="{Binding DataItems}" Margin="3,3,3,3" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridCheckBoxColumn/>
+                <DataGridTextColumn Header="Название" Binding="{Binding Name}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+            <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition/>
@@ -30,12 +38,12 @@
                 <ColumnDefinition/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Button Content="Previous" Command="{Binding PreviousPageCommand}" Width="100" Height="30" HorizontalAlignment="Center" VerticalAlignment="Center" />
-            <TextBlock Text="{Binding CurrentPage}" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="50" />
+            <Button Content="Предыдущая" Command="{Binding PreviousPageCommand}" Width="100" Height="30" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="3,3,3,3"/>
+            <TextBlock Text="{Binding CurrentPage}" Grid.Column="1" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="50" TextAlignment="Right" />
             <TextBlock Text="/" Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Center" />
             <TextBlock Text="{Binding TotalPages}" Grid.Column="3" VerticalAlignment="Center" HorizontalAlignment="Left" MinWidth="50" />
-            <Button Content="Next" Command="{Binding NextPageCommand}" Grid.Column="4" Height="30" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <Button Content="Следующая" Command="{Binding NextPageCommand}" Grid.Column="4" Height="30" Width="100" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="3,3,3,3"/>
         </Grid>
-        <Button Grid.Row="3" Content="Скачать отмеченные на данной странице" HorizontalAlignment="Right" Margin="0,0,0,0" VerticalAlignment="Top" Width="250"/>
+        <Button Grid.Row="3" Content="Скачать отмеченные на данной странице" HorizontalAlignment="Center" Margin="3,3,3,3" VerticalAlignment="Top" Width="250"/>
     </Grid>
 </UserControl>

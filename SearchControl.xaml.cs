@@ -7,7 +7,6 @@ namespace Ark
         public SearchControl()
         {
             InitializeComponent();
-            DataContext = new SearchDocumentsModel();
         }
     }
 }

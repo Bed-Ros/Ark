@@ -54,17 +54,9 @@ namespace Ark
             LoadCurrentPage();
         }
 
-        private void LoadCurrentPage()
+        private async void LoadCurrentPage()
         {
-            var startIndex = (CurrentPage - 1) * ItemsPerPage;
-            var endIndex = Math.Min(startIndex + ItemsPerPage, TotalItems);
-
-            var simulatedData = new ObservableCollection<MyDataItem>();
-            for (int i = startIndex; i < endIndex; i++)
-            {
-                simulatedData.Add(new MyDataItem { Id = i + 1, Name = $"Item {i + 1}" });
-            }
-            DataItems = simulatedData;
+            DataItems = new ObservableCollection<Document>(await DatabaseContext.GetDocumentsPage(CurrentPage));
         }
 
         private void MoveToNextPage()

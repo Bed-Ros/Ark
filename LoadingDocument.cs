@@ -13,19 +13,23 @@ namespace Ark
             get { return name; }
             private set { name = value; OnPropertyChanged(nameof(Name)); }
         }
+
         string status = "";
         public string Status
         {
             get { return status; }
             private set { status = value; OnPropertyChanged(nameof(Status)); }
         }
+
         Exception? exception;
         public Exception? Exception
         {
             get { return exception; }
             private set { exception = value; OnPropertyChanged(nameof(Exception)); }
         }
+
         readonly string Filepath;
+
         public LoadingDocument(string filePath)
         {
             Filepath = filePath;
