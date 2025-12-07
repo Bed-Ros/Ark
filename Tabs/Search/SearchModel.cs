@@ -2,24 +2,29 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace Ark
+namespace Ark.Tabs.Search
 {
-    public class SearchDocumentsModel : INotifyPropertyChanged
+    public class SearchModel : TabModel, INotifyPropertyChanged
     {
-        public SearchDocumentsModel()
+        public SearchModel()
         {
             NextPageCommand = new RelayCommand((_) => MoveToNextPage(), (_) => CanMoveToNextPage());
             PreviousPageCommand = new RelayCommand((_) => MoveToPreviousPage(), (_) => CanMoveToPreviousPage());
-            LoadData();
         }
 
-        private ObservableCollection<Document> _dataItems;
+        public override void Refresh()
+        {
+            LoadCurrentPage();
+        }
+
+        private ObservableCollection<Document> _dataItems = new ObservableCollection<Document>();
         public ObservableCollection<Document> DataItems
         {
             get { return _dataItems; }
-            set { _dataItems = value; OnPropertyChanged(nameof(DataItems)); }
+            private set { _dataItems = value; OnPropertyChanged(nameof(DataItems)); }
         }
 
         private int _currentPage = 1;
@@ -48,15 +53,10 @@ namespace Ark
         public ICommand NextPageCommand { get; }
         public ICommand PreviousPageCommand { get; }
 
-        private void LoadData()
-        {
-            TotalItems = DatabaseContext.GetDocumentsCount();
-            LoadCurrentPage();
-        }
-
         private async void LoadCurrentPage()
         {
-            DataItems = new ObservableCollection<Document>(await DatabaseContext.GetDocumentsPage(CurrentPage));
+            TotalItems = DatabaseService.GetDocumentsCount();
+            DataItems = new ObservableCollection<Document>(await DatabaseService.GetDocumentsPage(CurrentPage));
         }
 
         private void MoveToNextPage()

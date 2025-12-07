@@ -47,7 +47,7 @@ namespace Ark
                     Name = Name,
                 };
                 Status = "Загрузка";
-                await DatabaseContext.Create(doc);
+                await DatabaseService.Create(doc);
                 Status = "Готово";
             }
             catch (Exception e)

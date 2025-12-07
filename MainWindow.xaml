@@ -3,17 +3,24 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Ark"
+        xmlns:local="clr-namespace:Ark.Tabs"
         mc:Ignorable="d"
-        Title="Ковчег" Height="558" Width="696">
+        Title="Ковчег" Height="270" Width="358">
+    <Window.DataContext>
+        <local:MainTabsManager/>
+    </Window.DataContext>
     <Grid>
-        <TabControl>
-            <TabItem Header="Поиск">
-                <local:SearchControl/>
-            </TabItem>
-            <TabItem Header="Загрузка">
-                <local:UploadControl/>
-            </TabItem>
+        <TabControl ItemsSource="{Binding Tabs}">
+            <TabControl.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding Header}" />
+                </DataTemplate>
+            </TabControl.ItemTemplate>
+            <TabControl.ContentTemplate>
+                <DataTemplate>
+                    <ContentControl Content="{Binding Control}" />
+                </DataTemplate>
+            </TabControl.ContentTemplate>
         </TabControl>
     </Grid>
 </Window>

@@ -3,11 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:Ark"
+             xmlns:local="clr-namespace:Ark.Tabs.Search"
              mc:Ignorable="d" 
              d:DesignHeight="181" d:DesignWidth="490.38">
     <UserControl.DataContext>
-        <local:SearchDocumentsModel/>
+        <local:SearchModel/>
     </UserControl.DataContext>
     <Grid Background="#FFFFFFFF">
         <Grid.RowDefinitions>
@@ -26,7 +26,7 @@
         </Grid>
         <DataGrid Grid.Row="1" ItemsSource="{Binding DataItems}" Margin="3,3,3,3" AutoGenerateColumns="False">
             <DataGrid.Columns>
-                <DataGridCheckBoxColumn/>
+                <!--<DataGridCheckBoxColumn/>-->
                 <DataGridTextColumn Header="Название" Binding="{Binding Name}"/>
             </DataGrid.Columns>
         </DataGrid>

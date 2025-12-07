@@ -2,22 +2,23 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace Ark
+namespace Ark.Tabs.Upload
 {
-    public class UploadDocumentsModel : INotifyPropertyChanged
+    public class UploadModel : TabModel, INotifyPropertyChanged
     {
-        public UploadDocumentsModel()
+        public UploadModel()
         {
             AddFilesToQueue = new RelayCommand((_) => AddFiles(), (_) => CanAddFiles());
         }
 
-        public ObservableCollection<LoadingDocument> Queue { get; set; } = new ObservableCollection<LoadingDocument>();
+        public ObservableCollection<LoadingDocument> Queue { get; set; } = new();
 
         public ICommand AddFilesToQueue { get; }
 
-        string[] ChooseFiles()
+        static string[] ChooseFiles()
         {
             var dialog = new OpenFileDialog
             {
@@ -29,7 +30,7 @@ namespace Ark
             return dialog.FileNames;
         }
 
-        void AddFiles()
+        private void AddFiles()
         {
             try
             {
@@ -47,8 +48,8 @@ namespace Ark
             }
         }
 
-        bool canAddFiles { get; set; } = true;
-        bool CanAddFiles()
+        private bool canAddFiles { get; set; } = true;
+        private bool CanAddFiles()
         {
             return canAddFiles;
         }

@@ -7,10 +7,10 @@
     </ApplicationDefinition>
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="SearchControl.xaml.cs">
+    <Compile Update="Tabs\Search\SearchControl.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="UploadControl.xaml.cs">
+    <Compile Update="Tabs\Upload\UploadControl.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
@@ -18,10 +18,10 @@
     <Page Update="MainWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
-    <Page Update="SearchControl.xaml">
+    <Page Update="Tabs\Search\SearchControl.xaml">
       <SubType>Designer</SubType>
     </Page>
-    <Page Update="UploadControl.xaml">
+    <Page Update="Tabs\Upload\UploadControl.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>

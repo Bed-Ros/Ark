@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Ark
 {
-    public static class DatabaseContext
+    public static class DatabaseService
     {
         //Документы
         //Создание
