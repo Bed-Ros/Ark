@@ -5,17 +5,15 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:Ark.Tabs.Upload"
              mc:Ignorable="d" 
-             d:DesignHeight="163" d:DesignWidth="800">
-    <UserControl.DataContext>
-        <local:UploadModel/>
-    </UserControl.DataContext>
-    <Grid Background="#FFE5E5E5">
+             d:DesignHeight="163" d:DesignWidth="800"
+             d:DataContext="{d:DesignInstance local:UploadModel}">
+    <Grid Background="#FFE5E5E5" Margin="0,0,0,0">
         <Grid.RowDefinitions>
             <RowDefinition/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Button Content="Загрузить" HorizontalAlignment="Center" Margin="3,3,3,3" VerticalAlignment="Top" Height="30" Width="80" Grid.Row="1" Command="{Binding AddFilesToQueue}"/>
-        <DataGrid ItemsControl.ItemsSource="{Binding Queue, Mode=OneWay}" Margin="3,3,3,3" Grid.Row="0" AutoGenerateColumns="False">
+        <DataGrid ItemsControl.ItemsSource="{Binding Queue}" Margin="3,3,3,3" Grid.Row="0" AutoGenerateColumns="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Название" Binding="{Binding Name, Mode=OneWay}"/>
                 <DataGridTextColumn Header="Статус" Binding="{Binding Status, Mode=OneWay}"/>

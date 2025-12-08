@@ -1,12 +1,15 @@
-﻿using System.Windows.Controls;
+﻿using System.Data.SqlTypes;
+using System.Windows.Controls;
 
 namespace Ark
 {
+
     public partial class SearchControl : UserControl
     {
-        public SearchControl()
+        public SearchControl(object context)
         {
             InitializeComponent();
+            DataContext = context;
         }
     }
 }

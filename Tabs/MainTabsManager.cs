@@ -8,33 +8,36 @@ namespace Ark.Tabs
     {
         public MainTabsManager()
         {
+            var searchModel = new SearchModel();
+            var updateModel = new UploadModel();
+
             Tabs = new()
             {
                 new Tab()
                 {
                     Header = "Поиск",
-                    Control = new SearchControl(),
-                    Model = new SearchModel(),
+                    Control = new SearchControl(searchModel),
+                    Model = searchModel,
                 },
                 new Tab()
                 {
                     Header = "Загрузка",
-                    Control = new UploadControl(),
-                    Model = new UploadModel(),
+                    Control = new UploadControl(updateModel),
+                    Model = updateModel,
                 },
             };
         }
 
-        public readonly ObservableCollection<Tab> Tabs;
+        public ObservableCollection<Tab> Tabs { get; private set; }
 
-        private Tab selectedTab;
-        public Tab SelectedTab
+        private int selectedIndex = -1; //-1 - для обновления первой вкладки
+        public int SelectedIndex
         {
-            get => selectedTab;
+            get => selectedIndex;
             set
             {
-                selectedTab = value;
-                selectedTab.Model.Refresh();
+                selectedIndex = value;
+                Tabs[selectedIndex].Model.Refresh();
             }
         }
     }

@@ -10,7 +10,7 @@
         <local:MainTabsManager/>
     </Window.DataContext>
     <Grid>
-        <TabControl ItemsSource="{Binding Tabs}">
+        <TabControl ItemsSource="{Binding Tabs}" SelectedIndex="{Binding SelectedIndex}">
             <TabControl.ItemTemplate>
                 <DataTemplate>
                     <TextBlock Text="{Binding Header}" />

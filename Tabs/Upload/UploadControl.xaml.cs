@@ -4,9 +4,10 @@ namespace Ark
 {
     public partial class UploadControl : UserControl
     {
-        public UploadControl()
+        public UploadControl(object context)
         {
             InitializeComponent();
+            DataContext = context;
         }
     }
 }
