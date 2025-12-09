@@ -5,7 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Ark.Tabs"
         mc:Ignorable="d"
-        Title="Ковчег" Height="270" Width="358">
+        Title="Ковчег" 
+        d:DesignHeight="250" d:DesignWidth="600"
+        Height="600" Width="800">
     <Window.DataContext>
         <local:MainTabsManager/>
     </Window.DataContext>

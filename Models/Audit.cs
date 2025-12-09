@@ -17,6 +17,7 @@ namespace Ark.Models
         public DateTime DateTime { get; set; }
         public string TableName { get; set; } = null!;
         public string State { get; set; } = null!;
+        public string Keys { get; set; } = null!;
         public string? OldValues { get; set; }
         public string? NewValues { get; set; }
     }

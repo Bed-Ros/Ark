@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Ark.Services;
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
@@ -41,10 +42,11 @@ namespace Ark
             {
                 Status = "Подготовка";
                 Name = Path.GetFileName(Filepath);
-                var doc = new Models.Document()
+                var doc = new Models.DbFile()
                 {
                     Bytes = File.ReadAllBytes(Filepath),
                     Name = Name,
+                    Text = WordService.GetAllText(),
                 };
                 Status = "Загрузка";
                 await DatabaseService.Create(doc);

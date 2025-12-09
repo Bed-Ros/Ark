@@ -1,4 +1,5 @@
 ﻿using Ark.Models;
+using Ark.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -12,6 +13,8 @@ namespace Ark.Tabs.Search
         {
             NextPageCommand = new RelayCommand((_) => MoveToNextPage(), (_) => CanMoveToNextPage());
             PreviousPageCommand = new RelayCommand((_) => MoveToPreviousPage(), (_) => CanMoveToPreviousPage());
+            SearchCommand = new RelayCommand((_) => LoadCurrentPage());
+            DownloadCommand = new RelayCommand((_) => LoadCurrentPage());
         }
 
         public override void Refresh()
@@ -19,43 +22,70 @@ namespace Ark.Tabs.Search
             LoadCurrentPage();
         }
 
-        private ObservableCollection<Document> _dataItems = new ObservableCollection<Document>();
-        public ObservableCollection<Document> DataItems
+        private ObservableCollection<DbFile> dataItems = new();
+        public ObservableCollection<DbFile> DataItems
         {
-            get { return _dataItems; }
-            private set { _dataItems = value; OnPropertyChanged(nameof(DataItems)); }
+            get { return dataItems; }
+            private set { dataItems = value; OnPropertyChanged(nameof(DataItems)); }
         }
 
-        private int _currentPage = 1;
+        private int currentPage = 1;
         public int CurrentPage
         {
-            get { return _currentPage; }
-            set { _currentPage = value; OnPropertyChanged(nameof(CurrentPage)); LoadCurrentPage(); }
+            get { return currentPage; }
+            set { currentPage = value; OnPropertyChanged(nameof(CurrentPage)); LoadCurrentPage(); }
         }
 
-        private int _itemsPerPage = Properties.Settings.Default.ItemsPerPage;
+        private int itemsPerPage = Properties.Settings.Default.ItemsPerPage;
         public int ItemsPerPage
         {
-            get { return _itemsPerPage; }
-            set { _itemsPerPage = value; OnPropertyChanged(nameof(ItemsPerPage)); LoadCurrentPage(); }
+            get { return itemsPerPage; }
+            set { itemsPerPage = value; OnPropertyChanged(nameof(ItemsPerPage)); LoadCurrentPage(); }
         }
 
-        private long _totalItems;
+        private long totalItems;
         public long TotalItems
         {
-            get { return _totalItems; }
-            set { _totalItems = value; OnPropertyChanged(nameof(TotalItems)); OnPropertyChanged(nameof(TotalPages)); }
+            get { return totalItems; }
+            set { totalItems = value; OnPropertyChanged(nameof(TotalItems)); OnPropertyChanged(nameof(TotalPages)); }
         }
 
         public int TotalPages => (int)Math.Ceiling((double)TotalItems / ItemsPerPage);
 
+        private string? searchText;
+        public string? SearchText
+        {
+            get { return searchText; }
+            set { searchText = value; OnPropertyChanged(nameof(SearchText)); OnPropertyChanged(nameof(SearchTextIsNotEmpty)); CurrentPage = 1; }
+        }
+
+        public bool SearchTextIsNotEmpty => !string.IsNullOrWhiteSpace(SearchText);
+
+        private bool isAllSelected = false;
+        public bool IsAllSelected
+        {
+            get { return isAllSelected; }
+            set
+            {
+                isAllSelected = value;
+                OnPropertyChanged(nameof(IsAllSelected));
+
+                foreach (var item in DataItems)
+                {
+                    item.IsSelected = value;
+                }
+            }
+        }
+
         public ICommand NextPageCommand { get; }
         public ICommand PreviousPageCommand { get; }
+        public ICommand SearchCommand { get; }
+        public ICommand DownloadCommand { get; }
 
         private async void LoadCurrentPage()
         {
-            TotalItems = DatabaseService.GetDocumentsCount();
-            DataItems = new ObservableCollection<Document>(await DatabaseService.GetDocumentsPage(CurrentPage));
+            TotalItems = await DatabaseService.GetDocumentsCount(SearchText);
+            DataItems = new ObservableCollection<DbFile>(await DatabaseService.GetDocumentsPage(CurrentPage, SearchText));
         }
 
         private void MoveToNextPage()
