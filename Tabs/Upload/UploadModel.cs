@@ -2,7 +2,6 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace Ark.Tabs.Upload
@@ -20,11 +19,7 @@ namespace Ark.Tabs.Upload
 
         static string[] ChooseFiles()
         {
-            var dialog = new OpenFileDialog
-            {
-                Filter = "Документы Word|*.docx",
-                Multiselect = true
-            };
+            var dialog = new OpenFileDialog { Multiselect = true };
             if (dialog.ShowDialog() != true)
                 return Array.Empty<string>();
             return dialog.FileNames;
@@ -48,7 +43,7 @@ namespace Ark.Tabs.Upload
             }
         }
 
-        private bool canAddFiles { get; set; } = true;
+        private bool canAddFiles = true;
         private bool CanAddFiles()
         {
             return canAddFiles;

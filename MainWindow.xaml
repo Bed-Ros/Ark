@@ -7,7 +7,8 @@
         mc:Ignorable="d"
         Title="Ковчег" 
         d:DesignHeight="250" d:DesignWidth="600"
-        Height="600" Width="800">
+        Height="600" Width="800"
+        FontSize="14">
     <Window.DataContext>
         <local:MainTabsManager/>
     </Window.DataContext>

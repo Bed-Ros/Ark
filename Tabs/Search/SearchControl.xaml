@@ -3,19 +3,20 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              xmlns:local="clr-namespace:Ark.Tabs.Search" 
              xmlns:ark="clr-namespace:Ark"
              mc:Ignorable="d" 
              d:DesignHeight="163" d:DesignWidth="494.981"
-             d:DataContext="{d:DesignInstance local:SearchModel}">
+             d:DataContext="{d:DesignInstance local:SearchModel}" 
+             FontSize="14">
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <BooleanToVisibilityConverter x:Key="qwe"/>
     </UserControl.Resources>
     <Grid Background="#FFFFFFFF" Margin="0,0,0,0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
         <Grid Grid.Row="0" VerticalAlignment="Top">
@@ -34,7 +35,7 @@
                         <Style.Resources>
                             <VisualBrush x:Key="CueBannerBrush" AlignmentX="Left" AlignmentY="Center" Stretch="None">
                                 <VisualBrush.Visual>
-                                    <Label Content="Введите имя или текст файла" Foreground="LightGray" />
+                                    <Label Content="Введите название" Foreground="LightGray" />
                                 </VisualBrush.Visual>
                             </VisualBrush>
                         </Style.Resources>
@@ -57,15 +58,29 @@
                     HorizontalAlignment="Stretch" 
                     Margin="3,3,3,3" 
                     VerticalAlignment="Center" 
-                    Width="55" 
-                    Grid.Column="1"/>
+                    Grid.Column="1" Width="60"/>
         </Grid>
+        <!--TODO Дать возможность редактировать нужные поля-->
         <DataGrid Grid.Row="1" 
-                  ItemsSource="{Binding DataItems}" 
+                  ItemsSource="{Binding Files}" 
+                  SelectedItem="{Binding SelectedFile}"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  CanUserSortColumns="False"                  
                   Margin="3,3,3,3" 
+                  IsReadOnly="True" 
                   AutoGenerateColumns="False">
+            <DataGrid.InputBindings>
+                <MouseBinding MouseAction="LeftDoubleClick"
+                              Command="{Binding OpenSelectedFileCommand}"/>
+            </DataGrid.InputBindings>
+            <DataGrid.RowStyle>
+                <Style TargetType="DataGridRow">
+                    <Setter Property="ToolTip" Value="Для просмотра кликните 2 раза"/>
+                </Style>
+            </DataGrid.RowStyle>
             <DataGrid.Columns>
-                <DataGridTemplateColumn Width="Auto">
+                <DataGridTemplateColumn Width="Auto" Visibility="Collapsed">
                     <DataGridTemplateColumn.HeaderTemplate>
                         <DataTemplate>
                             <CheckBox IsChecked="{Binding DataContext.IsAllSelected, RelativeSource={RelativeSource AncestorType={x:Type DataGrid}}}"
@@ -80,46 +95,51 @@
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Название" Binding="{Binding Name}"/>
-                <DataGridTextColumn Header="Найденный текст" Binding="{Binding Text}" 
-                                    Visibility="{Binding SearchTextIsNotEmpty, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <DataGridTextColumn Header="Расширение" Binding="{Binding Extension}"/>
+                <DataGridTextColumn Header="Найденный текст" 
+                                    Binding="{Binding Text}" 
+                                    Visibility="{Binding SearchTextIsNotEmpty, Converter={StaticResource qwe}}"/>
             </DataGrid.Columns>
         </DataGrid>
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition/>
-                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <Button Content="Предыдущая" 
-                    Command="{Binding PreviousPageCommand}" 
-                    Width="100" Height="30" 
+            <ComboBox Grid.Column="0"
+                      ItemsSource="{Binding PosibleItemsPerPage}"
+                      SelectedItem="{Binding FilesPerPage}" Width="75"
+                      Margin="3,3,3,3"/>
+            <Button Command="{Binding PreviousPageCommand}" 
+                    Width="50" Height="20"
                     HorizontalAlignment="Center" VerticalAlignment="Center" 
-                    Margin="3,3,3,3"/>
+                    Margin="3,3,3,3"
+                    Grid.Column="1">
+                <Image Source="\left_arrow.png"/>
+            </Button>
             <TextBlock Text="{Binding CurrentPage}" 
-                       Grid.Column="1" 
+                       Grid.Column="2" 
                        VerticalAlignment="Center" HorizontalAlignment="Right" 
                        MinWidth="50" 
-                       TextAlignment="Right" />
+                       TextAlignment="Right"/>
             <TextBlock Text="/" 
-                       Grid.Column="2" 
-                       VerticalAlignment="Center" HorizontalAlignment="Center" />
-            <TextBlock Text="{Binding TotalPages}" 
                        Grid.Column="3" 
+                       VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            <TextBlock Text="{Binding TotalPages}" 
+                       Grid.Column="4" 
                        VerticalAlignment="Center" HorizontalAlignment="Left" 
-                       MinWidth="50" />
-            <Button Content="Следующая" 
-                    Command="{Binding NextPageCommand}" 
-                    Grid.Column="4" 
-                    Height="30" Width="100" 
+                       MinWidth="50"/>
+            <Button Command="{Binding NextPageCommand}" 
+                    Grid.Column="5" Width="50" 
                     HorizontalAlignment="Center" VerticalAlignment="Center" 
-                    Margin="3,3,3,3"/>
-        </Grid>
-        <Button Grid.Row="3" 
-                Content="Скачать отмеченные на данной странице" 
-                HorizontalAlignment="Center" VerticalAlignment="Top" 
-                Width="250" 
-                Margin="3,3,3,3"/>
+                    Margin="3,3,3,3" Height="20">
+                <Image Source="\right_arrow.png"/>
+            </Button>
+        </Grid>   
     </Grid>
 </UserControl>

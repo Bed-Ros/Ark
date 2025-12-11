@@ -8,5 +8,8 @@
     <Setting Name="ConnectionString" Type="System.String" Scope="Application">
       <Value Profile="(Default)">Server=localhost;Database=Ark;Trusted_Connection=True;TrustServerCertificate=True;MultipleActiveResultSets=True;</Value>
     </Setting>
+    <Setting Name="TempFolderName" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Temp</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

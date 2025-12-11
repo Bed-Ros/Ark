@@ -44,5 +44,14 @@ namespace Ark.Properties {
                 return ((string)(this["ConnectionString"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("Temp")]
+        public string TempFolderName {
+            get {
+                return ((string)(this["TempFolderName"]));
+            }
+        }
     }
 }

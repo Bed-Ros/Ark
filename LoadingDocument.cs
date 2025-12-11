@@ -1,35 +1,45 @@
-﻿using Ark.Services;
+﻿using Ark.Models;
+using Ark.Services;
 using System;
 using System.ComponentModel;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace Ark
 {
     public class LoadingDocument : INotifyPropertyChanged
     {
-        string name = "";
-        public string Name
+        string filepath = "";
+        public string Filepath
         {
-            get { return name; }
-            private set { name = value; OnPropertyChanged(nameof(Name)); }
+            get { return filepath; }
+            private set
+            {
+                filepath = value;
+                OnPropertyChanged(nameof(Filepath));
+            }
         }
 
         string status = "";
         public string Status
         {
             get { return status; }
-            private set { status = value; OnPropertyChanged(nameof(Status)); }
+            private set
+            {
+                status = value;
+                OnPropertyChanged(nameof(Status));
+            }
         }
 
         Exception? exception;
         public Exception? Exception
         {
             get { return exception; }
-            private set { exception = value; OnPropertyChanged(nameof(Exception)); }
+            private set
+            {
+                exception = value;
+                OnPropertyChanged(nameof(Exception));
+            }
         }
-
-        readonly string Filepath;
 
         public LoadingDocument(string filePath)
         {
@@ -41,15 +51,9 @@ namespace Ark
             try
             {
                 Status = "Подготовка";
-                Name = Path.GetFileName(Filepath);
-                var doc = new Models.DbFile()
-                {
-                    Bytes = File.ReadAllBytes(Filepath),
-                    Name = Name,
-                    Text = WordService.GetAllText(),
-                };
+                DbFile file = FilesService.ReadFile(Filepath);
                 Status = "Загрузка";
-                await DatabaseService.Create(doc);
+                await DatabaseService.Create(file);
                 Status = "Готово";
             }
             catch (Exception e)
