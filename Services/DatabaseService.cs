@@ -13,12 +13,14 @@ namespace Ark.Services
 {
     public static class DatabaseService
     {
-        //Файлы
+        #region Файлы
+
         //Создание одного файла
         public static async Task<long> Create(DbFile file)
         {
+            var tableName = Table<DbFile>();
             var insertSql =
-                $@"Insert into {DbFile.TableName()} (Name, Extension, Bytes, Text)
+                $@"Insert into {tableName} (Name, Extension, Bytes, Text)
                 output inserted.Id
                 values (
                     @{nameof(DbFile.Name)}, 
@@ -38,7 +40,7 @@ namespace Ark.Services
                     {
                         Keys = JsonConvert.SerializeObject(file.Keys()),
                         State = nameof(AuditState.Create),
-                        TableName = DbFile.TableName(),
+                        TableName = tableName,
                         NewValues = JsonConvert.SerializeObject(file),
                     });
                 transaction.Commit();
@@ -54,13 +56,11 @@ namespace Ark.Services
         //Обновление одного файла
         public static async Task Update(DbFile file, string propertyName)
         {
-            var prop = typeof(DbFile).GetProperty(propertyName);
-            if (prop is null) throw new NullReferenceException();
-            var columnName = GetColumnName(prop);
-            if (columnName is null) throw new NullReferenceException();
+            var columnName = Column<DbFile>(propertyName);
+            var tableName = Table<DbFile>();
 
             var sql =
-               $@"Update {DbFile.TableName()}
+               $@"Update {tableName}
                 Set {columnName} = @{propertyName}
                 Where Id = @{nameof(DbFile.Id)}";
 
@@ -76,7 +76,7 @@ namespace Ark.Services
                     {
                         Keys = JsonConvert.SerializeObject(file.Keys()),
                         State = nameof(AuditState.Update),
-                        TableName = DbFile.TableName(),
+                        TableName = tableName,
                         NewValues = JsonConvert.SerializeObject(file),
                         OldValues = JsonConvert.SerializeObject(oldFile),
                     });
@@ -97,10 +97,11 @@ namespace Ark.Services
         }
         static async Task<DbFile> GetFile(SqlConnection connection, SqlTransaction? t, long id, bool includeBytes = false)
         {
+            var tableName = Table<DbFile>();
             var bytes = includeBytes ? ", Bytes" : "";
             var selectSql =
                 $@"Select Id, Name, Extension, Text{bytes}
-                From {DbFile.TableName()}
+                From {tableName}
                 Where Id = @{nameof(DbFile.Id)}";
             return await connection.QueryFirstAsync<DbFile>(selectSql, new { Id = id }, t);
         }
@@ -109,82 +110,92 @@ namespace Ark.Services
         static string FileTextCondition(string? text)
         {
             if (string.IsNullOrWhiteSpace(text))
-            {
                 return "";
-            }
-            else
-            {
 
-            }
-
-
-            //--Ensure the search term is formatted for CONTAINSTABLE if needed(e.g., precise phrase)
-            //-- For a precise word match you can use: '"' + @SearchTerm + '"'
-
-            @"DECLARE @SearchTerm NVARCHAR(100) = 'your_keyword';
-            DECLARE @ContextLength INT = 50; -- characters around the keyword
-
-            SELECT
-                '... ' +
-                SUBSTRING(
-                    T.ContentColumn,
-                    --Calculate the start position, ensuring it's not less than 1
-                    -- CHARINDEX returns the starting position(1 - based index)
-                    CASE
-                        WHEN CHARINDEX(@SearchTerm, T.ContentColumn) - @ContextLength < 1 THEN 1
-                        ELSE CHARINDEX(@SearchTerm, T.ContentColumn) - @ContextLength
-                    END,
-                    --Calculate the length to extract, ensuring it doesn't exceed the column length
-                    --(length calculation needs careful handling of start / end boundaries)
-                    @ContextLength * 2 + LEN(@SearchTerm)
-                ) + ' ...' AS Snippet
-            FROM
-                YourTableName AS T
-            WHERE
-                CONTAINS(T.ContentColumn, @SearchTerm); --Use FTS for efficient filtering"
-
+            text = text.Trim();
+            int n = Properties.Settings.Default.FullTextSearchPlusMinusSymbols;
+            var tableName = Table<DbFile>();
 
             //TODO Сделать text параметром
-            //TODO Добавить работу с расширением файла?
-            return string.IsNullOrWhiteSpace(text) ? "" : $"Where Name like '%{text.Trim()}%'";
-            //TODO добавить or contains(Text, '{text.Trim()}')"
+            return
+                $@"SELECT
+                    CASE
+                        WHEN CHARINDEX({text}, T.Text) > 0
+                        THEN 
+                            '... ' +
+                            SUBSTRING(
+                                T.Text,
+                                CASE
+                                    WHEN CHARINDEX({text}, T.Text) - {n} < 1 THEN 1
+                                    ELSE CHARINDEX({text}, T.Text) - {n}
+                                END,
+                                {n} * 2 + LEN({text})
+                            ) + ' ...' AS {nameof(DbFile.FoundText)}
+                        ELSE ''
+                    END
+                FROM
+                    {tableName} as T
+                WHERE
+                    CONCAT(Name, Extension) like '%{text}%' OR
+                    contains(Text, '{text}')";
         }
 
         //Запрос количества всех файлов
-        public static async Task<long> GetAllFilesCount(string? text = null)
+        public static async Task<long> GetAllFilesCount(bool searchInText = false, string? text = null)
         {
+            var tableName = Table<DbFile>();
+            string condition = "";
+            if (!string.IsNullOrWhiteSpace(text))
+            {
+                condition = "CONCAT(Name, Extension) LIKE CONCAT('%', @FindText, '%')";
+                if (searchInText)
+                    condition += " OR CONTAINS(Text, @FindText)";
+            }
             var sql =
                 $@"Select count(*)                 
-                From {DbFile.TableName()}
-                {FileTextCondition(text)}";
+                From {tableName}
+                Where {condition}";
 
             using var connection = new SqlConnection(Properties.Settings.Default.ConnectionString);
-            return await connection.ExecuteScalarAsync<long>(sql);
+            return await connection.ExecuteScalarAsync<long>(sql, new { FindText = text });
         }
 
         //Запрос страницу файлов
-        public static async Task<List<DbFile>> GetFilesPage(int num, string? text = null)
+        public static async Task<List<DbFile>> GetFilesPage(int num, bool searchInText = false, string? text = null)
         {
             var sql =
-                $@"Select Id, Name, Extension, Text
-                From {DbFile.TableName()}
-                {FileTextCondition(text)}
+                $@"Select
+                    {Column<DbFile>(nameof(DbFile.Id))},
+                    {Column<DbFile>(nameof(DbFile.Name))},
+                    {Column<DbFile>(nameof(DbFile.Extension))}
+                From {Table<DbFile>()}
                 Order by Id
                 Offset {(num - 1) * Properties.Settings.Default.ItemsPerPage} rows
                 Fetch next {Properties.Settings.Default.ItemsPerPage} rows only";
 
             using var connection = new SqlConnection(Properties.Settings.Default.ConnectionString);
-            return (await connection.QueryAsync<DbFile>(sql)).ToList();
+            return (await connection.QueryAsync<DbFile>(sql, new { FindText = text })).ToList();
         }
 
+        #endregion
+
+        #region Аудит
+
         //Создает Аудит
-        static async Task Create(SqlConnection connection, SqlTransaction t, Audit audit)
+        private static async Task Create(SqlConnection connection, SqlTransaction t, Audit audit)
         {
             audit.DateTime = DateTime.Now;
             audit.UserName = Environment.UserName;
 
             var sql =
-                $@"Insert into Audit (UserName, DateTime, TableName, State, Keys, OldValues, NewValues)
+                $@"Insert into {Table<Audit>()} (
+                    {Column<Audit>(nameof(Audit.UserName))},
+                    {Column<Audit>(nameof(Audit.DateTime))},
+                    {Column<Audit>(nameof(Audit.TableName))},
+                    {Column<Audit>(nameof(Audit.State))},
+                    {Column<Audit>(nameof(Audit.Keys))},
+                    {Column<Audit>(nameof(Audit.OldValues))},
+                    {Column<Audit>(nameof(Audit.NewValues))})
                 values (
                     @{nameof(Audit.UserName)}, 
                     @{nameof(Audit.DateTime)}, 
@@ -197,15 +208,34 @@ namespace Ark.Services
             await connection.ExecuteAsync(sql, audit, t);
         }
 
+        #endregion
+
+        #region Работа с атрибутами классов
+
         //Возвращает атрибут свойства класса, обозначающий колонку в БД
-        private static string? GetColumnName(PropertyInfo propInfo)
-        {
+        private static string Column(PropertyInfo propInfo)
+        {            
             var columnAttr = propInfo.GetCustomAttribute<ColumnAttribute>();
             if (string.IsNullOrEmpty(columnAttr?.Name))
-                return null;
-            else
-                return columnAttr.Name;
-
+                throw new NullReferenceException();
+            return columnAttr.Name;
         }
+        private static string Column<T>(string propertyName)
+        {
+            var prop = typeof(T).GetProperty(propertyName);
+            if (prop is null) throw new NullReferenceException();
+            return Column(prop);
+        }
+
+        //Возвращает атрибут класса, обозначающий таблицу в БД
+        private static string Table<T>()
+        {
+            var tableName = typeof(T).GetCustomAttribute<TableAttribute>();
+            if (string.IsNullOrEmpty(tableName?.Name))
+                throw new NullReferenceException();
+            return tableName.Name;
+        }
+
+        #endregion
     }
 }

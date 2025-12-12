@@ -8,16 +8,9 @@ namespace Ark.Models
     [Table("Files")]
     public class DbFile : IDatabaseObject, INotifyPropertyChanged
     {
-        long id;
         [Key]
         [Column("Id")]
-        public long Id {
-            get { return id; }
-            set
-            {
-                id = value;
-            }
-        }
+        public long Id { get; set; }
 
         string name = null!;
         [Column("Name")]
@@ -42,7 +35,7 @@ namespace Ark.Models
             }
         }
 
-        byte[] bytes = null!;
+        byte[] bytes = null!;        
         [JsonIgnore]
         [Column("Bytes")]
         public byte[] Bytes {
@@ -55,6 +48,7 @@ namespace Ark.Models
         } 
 
         string? text;
+        [JsonIgnore]
         [Column("Text")]
         public string? Text {
             get { return text; }
@@ -91,7 +85,6 @@ namespace Ark.Models
                 
 
         public object Keys() => new { Id };
-        public static string TableName() => "Files";
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected virtual void OnPropertyChanged(string propertyName)

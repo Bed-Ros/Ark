@@ -53,5 +53,14 @@ namespace Ark.Properties {
                 return ((string)(this["TempFolderName"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("50")]
+        public int FullTextSearchPlusMinusSymbols {
+            get {
+                return ((int)(this["FullTextSearchPlusMinusSymbols"]));
+            }
+        }
     }
 }
