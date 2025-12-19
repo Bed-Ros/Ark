@@ -39,6 +39,38 @@ namespace Ark
             }
         }
 
+        //Обертка для вывода ошибок на экран с finally блоком
+        public static void ErrorDecorator(Action act, Action finalAct)
+        {
+            try
+            {
+                act();
+            }
+            catch (Exception exc)
+            {
+                ErrorMessageBox(exc.Message);
+            }
+            finally
+            {
+                finalAct();
+            }
+        }
+        public async static Task ErrorDecorator(Func<Task> act, Action finalAct)
+        {
+            try
+            {
+                await act();
+            }
+            catch (Exception exc)
+            {
+                ErrorMessageBox(exc.Message);
+            }
+            finally
+            {
+                finalAct();
+            }
+        }
+
         //Сообщение об ошибке 
         public static void ErrorMessageBox(string message)
         {

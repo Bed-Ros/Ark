@@ -12,20 +12,20 @@ namespace Ark.Tabs
             var updateModel = new UploadModel();
 
             Tabs = new()
-            {
-                new Tab()
                 {
-                    Header = "Поиск",
-                    Control = new SearchControl(searchModel),
-                    Model = searchModel,
-                },
-                new Tab()
-                {
-                    Header = "Загрузка",
-                    Control = new UploadControl(updateModel),
-                    Model = updateModel,
-                },
-            };
+                    new Tab()
+                    {
+                        Header = "Поиск",
+                        Control = new SearchControl(searchModel),
+                        Model = searchModel,
+                    },
+                    new Tab()
+                    {
+                        Header = "Загрузка",
+                        Control = new UploadControl(updateModel),
+                        Model = updateModel,
+                    },
+                };
         }
 
         public ObservableCollection<Tab> Tabs { get; private set; }

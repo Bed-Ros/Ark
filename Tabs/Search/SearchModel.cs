@@ -1,10 +1,13 @@
 ﻿using Ark.Models;
 using Ark.Services;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace Ark.Tabs.Search
@@ -48,17 +51,20 @@ namespace Ark.Tabs.Search
             }
         }
 
-        public static ObservableCollection<int> PosibleItemsPerPage => new() { 10, 50, 100, 500, 1000 };
+        public static ObservableCollection<int> PosibleItemsPerPage => [10, 50, 100, 500, 1000];
         public int FilesPerPage
         {
             get { return Properties.Settings.Default.ItemsPerPage; }
             set
             {
-                Properties.Settings.Default.ItemsPerPage = value;
-                Properties.Settings.Default.Save();
-                OnPropertyChanged(nameof(FilesPerPage));
-                OnPropertyChanged(nameof(TotalPages));
-                LoadCurrentPage();
+                Global.ErrorDecorator(() =>
+                {
+                    Properties.Settings.Default.ItemsPerPage = value;
+                    Properties.Settings.Default.Save();
+                    OnPropertyChanged(nameof(FilesPerPage));
+                    OnPropertyChanged(nameof(TotalPages));
+                    CurrentPage = 1;
+                });
             }
         }
 
@@ -84,12 +90,9 @@ namespace Ark.Tabs.Search
             {
                 searchText = value;
                 OnPropertyChanged(nameof(SearchText));
-                OnPropertyChanged(nameof(SearchTextIsNotEmpty));
                 CurrentPage = 1;
             }
         }
-
-        public bool SearchTextIsNotEmpty => !string.IsNullOrWhiteSpace(SearchText);
 
         private bool isAllChecked = false;
         public bool IsAllSelected
@@ -104,6 +107,29 @@ namespace Ark.Tabs.Search
                 {
                     item.IsSelected = value;
                 }
+            }
+        }
+
+        private bool isLoading = false;
+        public bool IsLoading
+        {
+            get { return isLoading; }
+            set
+            {
+                isLoading = value;
+                OnPropertyChanged(nameof(IsLoading));
+            }
+        }
+
+        private bool searchInFileText = false;
+        public bool SearchInFileText
+        {
+            get { return searchInFileText; }
+            set
+            {
+                searchInFileText = value;
+                OnPropertyChanged(nameof(SearchInFileText));
+                CurrentPage = 1;
             }
         }
 
@@ -126,28 +152,54 @@ namespace Ark.Tabs.Search
 
         private async void LoadCurrentPage()
         {
-            TotalFiles = await DatabaseService.GetAllFilesCount(SearchText);
-            Files = new ObservableCollection<DbFile>(await DatabaseService.GetFilesPage(CurrentPage, SearchText));
-            foreach (var file in Files)
+            try
             {
-                file.PropertyChanged += File_PropertyChanged;
+                IsLoading = true;
+                TotalFiles = await DatabaseService.GetAllFilesCount(SearchInFileText, SearchText);
+                Files = new ObservableCollection<DbFile>(await DatabaseService.GetFilesPage(CurrentPage, SearchInFileText, SearchText));
+                foreach (var file in Files)
+                {
+                    file.PropertyChanged += File_PropertyChanged;
+                }
+            }
+            catch (Exception exc)
+            {
+                Global.ErrorMessageBox(exc.Message);
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
 
         private async void File_PropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
-            if (e.PropertyName != nameof(DbFile.Name) || sender is null)
-                return;
-            await DatabaseService.Update((DbFile)sender, e.PropertyName);
+            await Global.ErrorDecorator(async () =>
+            {
+                if (e.PropertyName != nameof(DbFile.Name) || sender is null)
+                    return;
+                await DatabaseService.Update((DbFile)sender, e.PropertyName);
+            });
         }
 
         private async void OpenSelectedFile()
         {
-            if (SelectedFile is null) return;
-            DbFile file = await DatabaseService.GetFile(SelectedFile.Id, true);
-            string path = Path.Combine(Global.TempFolderPath, file.Name + file.Extension);
-            await File.WriteAllBytesAsync(path, file.Bytes);
-            Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
+            try
+            {
+                IsLoading = true;            
+                if (SelectedFile is null) return;
+                string path = Path.Combine(Global.TempFolderPath, SelectedFile.Name + SelectedFile.Extension);
+                if (!await DatabaseService.DownloadFile(SelectedFile.Id, path)) return;
+                Process.Start(new ProcessStartInfo { FileName = path, UseShellExecute = true });
+            }
+            catch (Exception exc)
+            {
+                Global.ErrorMessageBox(exc.Message);
+            }
+            finally
+            {
+                IsLoading = false;
+            }
         }
 
         private void MoveToNextPage()

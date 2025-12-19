@@ -2,11 +2,12 @@
 using Ark.Services;
 using System;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Ark
 {
-    public class LoadingDocument : INotifyPropertyChanged
+    public class LoadingFile : INotifyPropertyChanged
     {
         string filepath = "";
         public string Filepath
@@ -41,7 +42,7 @@ namespace Ark
             }
         }
 
-        public LoadingDocument(string filePath)
+        public LoadingFile(string filePath)
         {
             Filepath = filePath;
         }
@@ -49,9 +50,9 @@ namespace Ark
         public async Task Load()
         {
             try
-            {
+            {                
                 Status = "Подготовка";
-                DbFile file = FilesService.ReadFile(Filepath);
+                DbFile file = await FilesService.ReadFile(Filepath);
                 Status = "Загрузка";
                 await DatabaseService.Create(file);
                 Status = "Готово";

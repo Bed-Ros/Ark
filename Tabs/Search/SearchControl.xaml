@@ -6,36 +6,54 @@
              xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
              xmlns:local="clr-namespace:Ark.Tabs.Search" 
              xmlns:ark="clr-namespace:Ark"
+             xmlns:gif="http://wpfanimatedgif.codeplex.com"
              mc:Ignorable="d" 
              d:DesignHeight="163" d:DesignWidth="494.981"
              d:DataContext="{d:DesignInstance local:SearchModel}" 
              FontSize="14">
     <UserControl.Resources>
-        <BooleanToVisibilityConverter x:Key="qwe"/>
+        <xctk:InverseBoolConverter x:Key="InverseBoolConverter"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </UserControl.Resources>
-    <Grid Background="#FFFFFFFF" Margin="0,0,0,0">
+    <Grid>
+        <Image gif:ImageBehavior.AnimatedSource="\Resources\loading.gif"
+               Panel.ZIndex="1"
+               Stretch="None"               
+               Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        <Grid Background="#FFFFFFFF" 
+              Margin="0,0,0,0"
+              Panel.ZIndex="0"
+              IsEnabled="{Binding IsLoading, Converter={StaticResource InverseBoolConverter}}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>            
+            <RowDefinition Height="Auto"/>            
             <RowDefinition/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0" VerticalAlignment="Top">
+        <CheckBox IsChecked="{Binding SearchInFileText}"
+                  Grid.Row="1"
+                  FontSize="12"
+                  HorizontalAlignment="Left" VerticalAlignment="Center"
+                  Margin="3,3,3,3" 
+                  Content="Искать в тексте файлов (Поиск происходит на много дольше!)"/>
+        <Grid Grid.Row="0" 
+              VerticalAlignment="Top">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <ark:EasilyDefocusableTextBox Text="{Binding SearchText}" 
-                     HorizontalAlignment="Stretch" 
-                     Margin="3,3,3,3" 
-                     TextWrapping="Wrap" 
-                     VerticalAlignment="Center" 
-                     Grid.Row="1">
+                                          HorizontalAlignment="Stretch" VerticalAlignment="Center" 
+                                          Margin="3,3,3,3"
+                                          TextWrapping="Wrap"
+                                          Grid.Row="1">
                 <TextBox.Style>                    
-                    <Style TargetType="TextBox" xmlns:sys="clr-namespace:System;assembly=mscorlib">
+                    <Style TargetType="TextBox" 
+                           xmlns:sys="clr-namespace:System;assembly=mscorlib">
                         <Style.Resources>
                             <VisualBrush x:Key="CueBannerBrush" AlignmentX="Left" AlignmentY="Center" Stretch="None">
                                 <VisualBrush.Visual>
-                                    <Label Content="Введите название" Foreground="LightGray" />
+                                    <Label Content="Введите название(и/или расширение) или текст файла" Foreground="LightGray" />
                                 </VisualBrush.Visual>
                             </VisualBrush>
                         </Style.Resources>
@@ -58,10 +76,10 @@
                     HorizontalAlignment="Stretch" 
                     Margin="3,3,3,3" 
                     VerticalAlignment="Center" 
-                    Grid.Column="1" Width="60"/>
+                    Grid.Column="1" Width="60" Background="White"/>
         </Grid>
         <!--TODO Дать возможность редактировать нужные поля-->
-        <DataGrid Grid.Row="1" 
+        <DataGrid Grid.Row="2" 
                   ItemsSource="{Binding Files}" 
                   SelectedItem="{Binding SelectedFile}"
                   CanUserAddRows="False"
@@ -97,11 +115,10 @@
                 <DataGridTextColumn Header="Название" Binding="{Binding Name}"/>
                 <DataGridTextColumn Header="Расширение" Binding="{Binding Extension}"/>
                 <DataGridTextColumn Header="Найденный текст" 
-                                    Binding="{Binding Text}" 
-                                    Visibility="{Binding SearchTextIsNotEmpty, Converter={StaticResource qwe}}"/>
+                                    Binding="{Binding FoundText}"/>
             </DataGrid.Columns>
         </DataGrid>
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
@@ -115,12 +132,12 @@
                       ItemsSource="{Binding PosibleItemsPerPage}"
                       SelectedItem="{Binding FilesPerPage}" Width="75"
                       Margin="3,3,3,3"/>
-            <Button Command="{Binding PreviousPageCommand}" 
+            <Button Command="{Binding PreviousPageCommand}"                     
                     Width="50" Height="20"
                     HorizontalAlignment="Center" VerticalAlignment="Center" 
                     Margin="3,3,3,3"
-                    Grid.Column="1">
-                <Image Source="\left_arrow.png"/>
+                    Grid.Column="1" Background="White">
+                    <Image Source="\Resources\left_arrow.png"/>
             </Button>
             <TextBlock Text="{Binding CurrentPage}" 
                        Grid.Column="2" 
@@ -137,9 +154,10 @@
             <Button Command="{Binding NextPageCommand}" 
                     Grid.Column="5" Width="50" 
                     HorizontalAlignment="Center" VerticalAlignment="Center" 
-                    Margin="3,3,3,3" Height="20">
-                <Image Source="\right_arrow.png"/>
+                    Margin="3,3,3,3" Height="20" Background="White">
+                    <Image Source="\Resources\right_arrow.png"/>
             </Button>
         </Grid>   
+    </Grid>
     </Grid>
 </UserControl>

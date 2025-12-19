@@ -1,11 +1,13 @@
 ﻿using Ark.Models;
 using Dapper;
+using Microsoft.Data.SqlClient;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Data.SqlClient;
-using System.Linq;
+using System.Data;
+using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -20,25 +22,42 @@ namespace Ark.Services
         {
             var tableName = Table<DbFile>();
             var insertSql =
-                $@"Insert into {tableName} (Name, Extension, Bytes, Text)
-                output inserted.Id
+                $@"Insert into {tableName} 
+                    ({Column<DbFile>(nameof(DbFile.Name))},
+                    {Column<DbFile>(nameof(DbFile.Extension))},
+                    {Column<DbFile>(nameof(DbFile.Path))},
+                    {Column<DbFile>(nameof(DbFile.Text))})
+                output inserted.{Column<DbFile>(nameof(DbFile.Id))}
                 values (
                     @{nameof(DbFile.Name)}, 
-                    @{nameof(DbFile.Extension)}, 
-                    @{nameof(DbFile.Bytes)},
+                    @{nameof(DbFile.Extension)},   
+                    @{nameof(DbFile.Path)},   
                     @{nameof(DbFile.Text)})";
+
+            var updateSql =
+                $@"Update {tableName}
+                Set {Column<DbFile>(nameof(DbFile.BytesStream))} = @{nameof(DbFile.BytesStream)}
+                Where {Column<DbFile>(nameof(DbFile.Id))} = @{nameof(DbFile.Id)}";
 
             using var connection = new SqlConnection(Properties.Settings.Default.ConnectionString);
             connection.Open();
             using var transaction = connection.BeginTransaction();
             try
             {
+                //Создаем запись с большинством данных
                 var insertedId = await connection.QueryFirstAsync<long>(insertSql, file, transaction);
                 file.Id = insertedId;
+                //Добавляем бинарные данные файла
+                using var command = new SqlCommand(updateSql, connection, transaction);
+                using var fileStream = File.OpenRead(file.Path);
+                command.Parameters.Add($"@{nameof(DbFile.BytesStream)}", SqlDbType.VarBinary, -1).Value = fileStream;
+                command.Parameters.Add($"@{nameof(DbFile.Id)}", SqlDbType.BigInt).Value = file.Id;
+                await command.ExecuteNonQueryAsync();
+                //Аудит
                 await Create(connection, transaction,
                     new Audit()
                     {
-                        Keys = JsonConvert.SerializeObject(file.Keys()),
+                        Keys = JsonConvert.SerializeObject(Keys(file)),
                         State = nameof(AuditState.Create),
                         TableName = tableName,
                         NewValues = JsonConvert.SerializeObject(file),
@@ -56,13 +75,11 @@ namespace Ark.Services
         //Обновление одного файла
         public static async Task Update(DbFile file, string propertyName)
         {
-            var columnName = Column<DbFile>(propertyName);
             var tableName = Table<DbFile>();
-
             var sql =
                $@"Update {tableName}
-                Set {columnName} = @{propertyName}
-                Where Id = @{nameof(DbFile.Id)}";
+                Set {Column<DbFile>(propertyName)} = @{propertyName}
+                Where {Column<DbFile>(nameof(DbFile.Id))} = @{nameof(DbFile.Id)}";
 
             using var connection = new SqlConnection(Properties.Settings.Default.ConnectionString);
             connection.Open();
@@ -74,7 +91,7 @@ namespace Ark.Services
                 await Create(connection, transaction,
                     new Audit()
                     {
-                        Keys = JsonConvert.SerializeObject(file.Keys()),
+                        Keys = JsonConvert.SerializeObject(Keys(file)),
                         State = nameof(AuditState.Update),
                         TableName = tableName,
                         NewValues = JsonConvert.SerializeObject(file),
@@ -90,91 +107,118 @@ namespace Ark.Services
         }
 
         //Запрос одного файла
-        public static async Task<DbFile> GetFile(long id, bool includeBytes = false)
+        public static async Task<DbFile> GetFile(long id)
         {
             using var connection = new SqlConnection(Properties.Settings.Default.ConnectionString);
-            return await GetFile(connection, null, id, includeBytes);
+            return await GetFile(connection, null, id);
         }
-        static async Task<DbFile> GetFile(SqlConnection connection, SqlTransaction? t, long id, bool includeBytes = false)
+        static async Task<DbFile> GetFile(SqlConnection connection, SqlTransaction? t, long id)
         {
-            var tableName = Table<DbFile>();
-            var bytes = includeBytes ? ", Bytes" : "";
             var selectSql =
-                $@"Select Id, Name, Extension, Text{bytes}
-                From {tableName}
-                Where Id = @{nameof(DbFile.Id)}";
-            return await connection.QueryFirstAsync<DbFile>(selectSql, new { Id = id }, t);
+                $@"Select
+                    {Column<DbFile>(nameof(DbFile.Id))},
+                    {Column<DbFile>(nameof(DbFile.Name))},
+                    {Column<DbFile>(nameof(DbFile.Path))},
+                    {Column<DbFile>(nameof(DbFile.Extension))}
+                From {Table<DbFile>()}
+                Where {Column<DbFile>(nameof(DbFile.Id))} = @{nameof(DbFile.Id)}";
+            return await connection.QueryFirstAsync<DbFile>(selectSql, new DbFile { Id = id }, t);
         }
 
-        //Условие поиска по тексту
-        static string FileTextCondition(string? text)
+        //Скачивание одного файла
+        public static async Task<bool> DownloadFile(long id, string path)
         {
-            if (string.IsNullOrWhiteSpace(text))
-                return "";
+            var selectSql =
+                $@"Select {Column<DbFile>(nameof(DbFile.BytesStream))}
+                From {Table<DbFile>()}
+                Where {Column<DbFile>(nameof(DbFile.Id))} = @{nameof(DbFile.Id)}";
 
-            text = text.Trim();
-            int n = Properties.Settings.Default.FullTextSearchPlusMinusSymbols;
-            var tableName = Table<DbFile>();
+            using SqlConnection connection = new(Properties.Settings.Default.ConnectionString);
+            connection.Open();
+            SqlCommand command = new(selectSql, connection);
+            command.Parameters.AddWithValue($"@{nameof(DbFile.Id)}", id);
 
-            //TODO Сделать text параметром
-            return
-                $@"SELECT
-                    CASE
-                        WHEN CHARINDEX({text}, T.Text) > 0
-                        THEN 
-                            '... ' +
-                            SUBSTRING(
-                                T.Text,
-                                CASE
-                                    WHEN CHARINDEX({text}, T.Text) - {n} < 1 THEN 1
-                                    ELSE CHARINDEX({text}, T.Text) - {n}
-                                END,
-                                {n} * 2 + LEN({text})
-                            ) + ' ...' AS {nameof(DbFile.FoundText)}
-                        ELSE ''
-                    END
-                FROM
-                    {tableName} as T
-                WHERE
-                    CONCAT(Name, Extension) like '%{text}%' OR
-                    contains(Text, '{text}')";
+            using SqlDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess);
+            if (!await reader.ReadAsync())
+                return false;
+            using Stream dbStream = reader.GetStream(0);
+            using FileStream fileStream = new(path, FileMode.Create, FileAccess.Write, FileShare.None, 4096, true);
+            await dbStream.CopyToAsync(fileStream);
+            return true;
         }
 
         //Запрос количества всех файлов
         public static async Task<long> GetAllFilesCount(bool searchInText = false, string? text = null)
         {
-            var tableName = Table<DbFile>();
+            var args = new { FindText = text?.Trim() };
             string condition = "";
-            if (!string.IsNullOrWhiteSpace(text))
+            if (!string.IsNullOrWhiteSpace(args.FindText))
             {
-                condition = "CONCAT(Name, Extension) LIKE CONCAT('%', @FindText, '%')";
+                condition = $@"Where CONCAT(
+                                {Column<DbFile>(nameof(DbFile.Name))}, 
+                                {Column<DbFile>(nameof(DbFile.Extension))}) 
+                            LIKE CONCAT('%', @{nameof(args.FindText)}, '%')";
                 if (searchInText)
-                    condition += " OR CONTAINS(Text, @FindText)";
+                    condition += $" OR FREETEXT({Column<DbFile>(nameof(DbFile.Text))}, @{nameof(args.FindText)})";
             }
             var sql =
                 $@"Select count(*)                 
-                From {tableName}
-                Where {condition}";
+                From {Table<DbFile>()}
+                {condition}";
 
             using var connection = new SqlConnection(Properties.Settings.Default.ConnectionString);
-            return await connection.ExecuteScalarAsync<long>(sql, new { FindText = text });
+            return await connection.ExecuteScalarAsync<long>(sql, args);
         }
 
         //Запрос страницу файлов
         public static async Task<List<DbFile>> GetFilesPage(int num, bool searchInText = false, string? text = null)
         {
-            var sql =
+            var args = new { FindText = text?.Trim() };
+            string select =
                 $@"Select
                     {Column<DbFile>(nameof(DbFile.Id))},
                     {Column<DbFile>(nameof(DbFile.Name))},
-                    {Column<DbFile>(nameof(DbFile.Extension))}
+                    {Column<DbFile>(nameof(DbFile.Extension))}";
+            string condition = "";
+            if (!string.IsNullOrWhiteSpace(args.FindText))
+            {
+                condition = $@"Where CONCAT(
+                                {Column<DbFile>(nameof(DbFile.Name))}, 
+                                {Column<DbFile>(nameof(DbFile.Extension))}) 
+                            LIKE CONCAT('%', @{nameof(args.FindText)}, '%')";
+                if (searchInText)
+                {
+                    condition += $" OR FREETEXT({Column<DbFile>(nameof(DbFile.Text))}, @{nameof(args.FindText)})";
+
+                    int n = Properties.Settings.Default.FullTextSearchPlusMinusSymbols;
+                    select +=
+                        $@",
+                        CASE
+                            WHEN CHARINDEX(@{nameof(args.FindText)}, {Column<DbFile>(nameof(DbFile.Text))}) > 0
+                            THEN 
+                                '... ' +
+                                SUBSTRING(
+                                    {Column<DbFile>(nameof(DbFile.Text))},
+                                    CASE
+                                        WHEN CHARINDEX(@{nameof(args.FindText)}, {Column<DbFile>(nameof(DbFile.Text))}) - {n} < 1 THEN 1
+                                        ELSE CHARINDEX(@{nameof(args.FindText)}, {Column<DbFile>(nameof(DbFile.Text))}) - {n}
+                                    END,
+                                    {n} * 2 + LEN(@{nameof(args.FindText)})
+                                ) + ' ...' 
+                            ELSE ''
+                        END AS {nameof(DbFile.FoundText)}";
+                }
+            }
+            var sql =
+                $@"{select}
                 From {Table<DbFile>()}
-                Order by Id
+                {condition}
+                Order by {Column<DbFile>(nameof(DbFile.Id))}
                 Offset {(num - 1) * Properties.Settings.Default.ItemsPerPage} rows
                 Fetch next {Properties.Settings.Default.ItemsPerPage} rows only";
 
             using var connection = new SqlConnection(Properties.Settings.Default.ConnectionString);
-            return (await connection.QueryAsync<DbFile>(sql, new { FindText = text })).ToList();
+            return [.. (await connection.QueryAsync<DbFile>(sql, args))];
         }
 
         #endregion
@@ -214,7 +258,7 @@ namespace Ark.Services
 
         //Возвращает атрибут свойства класса, обозначающий колонку в БД
         private static string Column(PropertyInfo propInfo)
-        {            
+        {
             var columnAttr = propInfo.GetCustomAttribute<ColumnAttribute>();
             if (string.IsNullOrEmpty(columnAttr?.Name))
                 throw new NullReferenceException();
@@ -223,8 +267,7 @@ namespace Ark.Services
         private static string Column<T>(string propertyName)
         {
             var prop = typeof(T).GetProperty(propertyName);
-            if (prop is null) throw new NullReferenceException();
-            return Column(prop);
+            return prop is null ? throw new NullReferenceException() : Column(prop);
         }
 
         //Возвращает атрибут класса, обозначающий таблицу в БД
@@ -234,6 +277,20 @@ namespace Ark.Services
             if (string.IsNullOrEmpty(tableName?.Name))
                 throw new NullReferenceException();
             return tableName.Name;
+        }
+
+        //Возвращает атрибуты класса, которые помечены ключевыми
+        private static Dictionary<string, object?> Keys<T>(T obj)
+        {
+            Dictionary<string, object?> result = [];
+            var props = typeof(T).GetProperties();
+            foreach (var prop in props)
+            {
+                var keyAttr = prop.GetCustomAttribute<KeyAttribute>();
+                if (keyAttr == null) continue;
+                result[prop.Name] = prop.GetValue(obj);
+            }
+            return result;
         }
 
         #endregion

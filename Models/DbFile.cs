@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.IO;
 
 namespace Ark.Models
 {
@@ -23,6 +24,18 @@ namespace Ark.Models
             }
         }
 
+        string path = null!;
+        [Column("Path")]
+        public string Path
+        {
+            get { return path; }
+            set
+            {
+                path = value;
+                OnPropertyChanged(nameof(Path));
+            }
+        }
+
         string extension = null!;
         [Column("Extension")]
         public string Extension
@@ -35,17 +48,9 @@ namespace Ark.Models
             }
         }
 
-        byte[] bytes = null!;        
         [JsonIgnore]
         [Column("Bytes")]
-        public byte[] Bytes {
-            get { return bytes; }
-            set
-            {
-                bytes = value;
-                OnPropertyChanged(nameof(Bytes));
-            }
-        } 
+        public FileStream? BytesStream { get; set; }
 
         string? text;
         [JsonIgnore]
@@ -82,9 +87,6 @@ namespace Ark.Models
                 OnPropertyChanged(nameof(IsSelected));
             }
         }
-                
-
-        public object Keys() => new { Id };
 
         public event PropertyChangedEventHandler? PropertyChanged;
         protected virtual void OnPropertyChanged(string propertyName)

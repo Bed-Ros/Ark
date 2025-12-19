@@ -8,12 +8,42 @@
              d:DesignHeight="163" d:DesignWidth="800"
              d:DataContext="{d:DesignInstance local:UploadModel}"
              FontSize="14">
+    <UserControl.Resources>
+        <Style x:Key="HyperlinkLikeButton" TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <ContentPresenter />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HotTrackBrushKey}}" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="true">
+                    <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}" />
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <ControlTemplate.Resources>
+                                    <Style TargetType="{x:Type TextBlock}">
+                                        <Setter Property="TextDecorations" Value="Underline" />
+                                    </Style>
+                                </ControlTemplate.Resources>
+                                <ContentPresenter />
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
     <Grid Background="#FFFFFFFF" Margin="0,0,0,0">
         <Grid.RowDefinitions>
             <RowDefinition/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <Button Content="Загрузить" HorizontalAlignment="Center" Margin="3,3,3,3" VerticalAlignment="Top" Height="30" Width="80" Grid.Row="1" Command="{Binding AddFilesToQueue}"/>
         <DataGrid ItemsControl.ItemsSource="{Binding Queue}" 
                   Margin="3,3,3,3" 
                   Grid.Row="0" 
@@ -26,6 +56,34 @@
                 <DataGridTextColumn Header="Статус" Binding="{Binding Status}"/>
                 <DataGridTextColumn Header="Сообщение ошибки" Binding="{Binding Exception.Message}"/>
             </DataGrid.Columns>
-        </DataGrid>
+        </DataGrid>        
+        <Grid Grid.Row="2" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="0"                     
+                    Margin="3,3,3,3" 
+                    Content="Загрузить файлы" 
+                    HorizontalAlignment="Right" VerticalAlignment="Center" 
+                    Height="30" Width="140"                     
+                    Command="{Binding AddFilesToQueue}" 
+                    Background="White"/>
+            <Button Grid.Column="1" 
+                    Margin="3,3,3,3" 
+                    Content="Загрузить все файлы из папки" 
+                    HorizontalAlignment="Left" VerticalAlignment="Center" 
+                    Height="30" Width="210" 
+                    Command="{Binding AddFoldersToQueue}" 
+                    Background="White"/>
+            <Button Content="Поддерживаемые файлы" 
+                    Margin="5,5,5,5" 
+                    Style="{StaticResource HyperlinkLikeButton}"
+                    HorizontalAlignment="Right" VerticalAlignment="Center" 
+                    Command="{Binding ViewSupportedFiles}" 
+                    Grid.Column="2"/>
+        </Grid>
+
     </Grid>
 </UserControl>

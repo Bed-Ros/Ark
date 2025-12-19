@@ -12,7 +12,7 @@ namespace Ark.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.2.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.VisualStudio.Editors.SettingsDesigner.SettingsSingleFileGenerator", "17.14.0.0")]
     internal sealed partial class Settings : global::System.Configuration.ApplicationSettingsBase {
         
         private static Settings defaultInstance = ((Settings)(global::System.Configuration.ApplicationSettingsBase.Synchronized(new Settings())));
@@ -37,8 +37,8 @@ namespace Ark.Properties {
         
         [global::System.Configuration.ApplicationScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("Server=localhost;Database=Ark;Trusted_Connection=True;TrustServerCertificate=True" +
-            ";MultipleActiveResultSets=True;")]
+        [global::System.Configuration.DefaultSettingValueAttribute("Server=192.168.100.149;Database=Ark;Trusted_Connection=True;TrustServerCertificat" +
+            "e=True;MultipleActiveResultSets=True;")]
         public string ConnectionString {
             get {
                 return ((string)(this["ConnectionString"]));

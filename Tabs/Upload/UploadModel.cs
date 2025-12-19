@@ -1,7 +1,10 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
+using System.Threading.Tasks;
 using System.Windows.Input;
 
 namespace Ark.Tabs.Upload
@@ -10,43 +13,78 @@ namespace Ark.Tabs.Upload
     {
         public UploadModel()
         {
-            AddFilesToQueue = new RelayCommand((_) => AddFiles(), (_) => CanAddFiles());
+            AddFilesToQueue = new RelayCommand(async (_) => await AddToQueue(ChooseFiles), (_) => CanAddFiles());
+            AddFoldersToQueue = new RelayCommand(async (_) => await AddToQueue(ChooseFoldersFiles), (_) => CanAddFiles());
+            ViewSupportedFiles = new RelayCommand((_) => ShowSupportedFiles());
         }
 
-        public ObservableCollection<LoadingDocument> Queue { get; set; } = new();
+        public ObservableCollection<LoadingFile> Queue { get; set; } = [];
 
         public ICommand AddFilesToQueue { get; }
+        public ICommand AddFoldersToQueue { get; }
+        public ICommand ViewSupportedFiles { get; }
 
         static string[] ChooseFiles()
         {
             var dialog = new OpenFileDialog { Multiselect = true };
             if (dialog.ShowDialog() != true)
-                return Array.Empty<string>();
+                return [];
             return dialog.FileNames;
         }
 
-        private void AddFiles()
+        static List<string> ChooseFoldersFiles()
+        {
+            var result = new List<string>();
+            var dialog = new OpenFolderDialog { Multiselect = true };
+            if (dialog.ShowDialog() == true)
+            {
+                foreach (string directory in dialog.FolderNames)
+                {
+                    result.AddRange(Directory.GetFiles(directory, "*.*", SearchOption.AllDirectories));
+                }
+            }
+            return result;
+        }
+
+        private async Task AddToQueue(Func<IEnumerable<string>> getPaths)
         {
             try
             {
                 canAddFiles = false;
-                foreach (string fileName in ChooseFiles())
+                List<LoadingFile> temp = [];
+                foreach (string path in getPaths())
                 {
-                    var cur = new LoadingDocument(fileName);
-                    _ = cur.Load();
-                    Queue.Add(cur);
+                    temp.Add(new LoadingFile(path));
                 }
+                foreach (LoadingFile f in temp)
+                {
+                    Queue.Add(f);
+                }
+                canAddFiles = true;
+                await Parallel.ForEachAsync(temp, async (f, _) =>
+                {
+                    await f.Load();
+                });
+            }
+            catch (Exception exc)
+            {
+                Global.ErrorMessageBox(exc.Message);
             }
             finally
             {
                 canAddFiles = true;
-            }
+            }            
         }
 
         private bool canAddFiles = true;
-        private bool CanAddFiles()
+        private bool CanAddFiles() => canAddFiles;
+
+        private static void ShowSupportedFiles()
         {
-            return canAddFiles;
+            Global.ErrorDecorator(() =>
+            {
+                new SupportedFiles().ShowDialog();
+            });
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;
