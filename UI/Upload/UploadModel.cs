@@ -1,4 +1,6 @@
-﻿using Microsoft.Win32;
+﻿using Ark.Services;
+using Ark.Tabs;
+using Microsoft.Win32;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -7,14 +9,14 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
-namespace Ark.Tabs.Upload
+namespace Ark.UI.Upload
 {
     public class UploadModel : TabModel, INotifyPropertyChanged
     {
         public UploadModel()
         {
-            AddFilesToQueue = new RelayCommand(async (_) => await AddToQueue(ChooseFiles), (_) => CanAddFiles());
-            AddFoldersToQueue = new RelayCommand(async (_) => await AddToQueue(ChooseFoldersFiles), (_) => CanAddFiles());
+            AddFilesToQueue = new RelayCommand((_) => AddToQueue(ChooseFiles), (_) => CanAddFiles());
+            AddFoldersToQueue = new RelayCommand((_) => AddToQueue(ChooseFoldersFiles), (_) => CanAddFiles());
             ViewSupportedFiles = new RelayCommand((_) => ShowSupportedFiles());
         }
 
@@ -46,7 +48,7 @@ namespace Ark.Tabs.Upload
             return result;
         }
 
-        private async Task AddToQueue(Func<IEnumerable<string>> getPaths)
+        private async void AddToQueue(Func<IEnumerable<string>> getPaths)
         {
             try
             {
@@ -61,10 +63,10 @@ namespace Ark.Tabs.Upload
                     Queue.Add(f);
                 }
                 canAddFiles = true;
-                await Parallel.ForEachAsync(temp, async (f, _) =>
+                foreach (LoadingFile f in temp)
                 {
-                    await f.Load();
-                });
+                    await f.Upload();
+                }
             }
             catch (Exception exc)
             {

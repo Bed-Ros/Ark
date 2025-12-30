@@ -6,7 +6,7 @@ namespace Ark.Models
 {
     public enum AuditState
     {
-        Create,
+        Insert,
         Update,
         Delete,
     }

@@ -1,10 +1,10 @@
 ﻿using System.Windows.Controls;
 
-namespace Ark
+namespace Ark.UI.Search
 {
-    public partial class UploadControl : UserControl
+    public partial class SearchView : UserControl
     {
-        public UploadControl(object context)
+        public SearchView(object context)
         {
             InitializeComponent();
             DataContext = context;

@@ -1,5 +1,5 @@
-﻿using Ark.Tabs.Search;
-using Ark.Tabs.Upload;
+﻿using Ark.UI.Search;
+using Ark.UI.Upload;
 using System.Collections.ObjectModel;
 
 namespace Ark.Tabs
@@ -11,21 +11,21 @@ namespace Ark.Tabs
             var searchModel = new SearchModel();
             var updateModel = new UploadModel();
 
-            Tabs = new()
-                {
+            Tabs =
+                [
                     new Tab()
                     {
                         Header = "Поиск",
-                        Control = new SearchControl(searchModel),
+                        Control = new SearchView(searchModel),
                         Model = searchModel,
                     },
                     new Tab()
                     {
                         Header = "Загрузка",
-                        Control = new UploadControl(updateModel),
+                        Control = new UploadView(updateModel),
                         Model = updateModel,
                     },
-                };
+                ];
         }
 
         public ObservableCollection<Tab> Tabs { get; private set; }

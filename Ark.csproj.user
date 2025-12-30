@@ -9,16 +9,16 @@
     </ApplicationDefinition>
   </ItemGroup>
   <ItemGroup>
-    <Compile Update="Tabs\Restoration\RestorationControl.xaml.cs">
+    <Compile Update="UI\Search\SearchView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Tabs\Search\SearchControl.xaml.cs">
+    <Compile Update="UI\Upload\SupportedFiles.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Tabs\Upload\SupportedFiles.xaml.cs">
+    <Compile Update="UI\Upload\UploadView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Update="Tabs\Upload\UploadControl.xaml.cs">
+    <Compile Update="UI\Download\DownloadView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
@@ -26,10 +26,10 @@
     <Page Update="MainWindow.xaml">
       <SubType>Designer</SubType>
     </Page>
-    <Page Update="Tabs\Search\SearchControl.xaml">
+    <Page Update="UI\Search\SearchView.xaml">
       <SubType>Designer</SubType>
     </Page>
-    <Page Update="Tabs\Upload\UploadControl.xaml">
+    <Page Update="UI\Upload\UploadView.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>

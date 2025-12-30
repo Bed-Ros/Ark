@@ -1,7 +1,7 @@
 ﻿using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace Ark
+namespace Ark.UI
 {
     public class EasilyDefocusableTextBox : TextBox
     {

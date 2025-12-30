@@ -56,7 +56,7 @@ namespace Ark.Services
             {
                 Name = Path.GetFileNameWithoutExtension(filepath),
                 Extension = ext,
-                Path = filepath,
+                FullPath = filepath,
                 Text = await GetAllText(filepath, ext),
             };
         }

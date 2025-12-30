@@ -13,9 +13,10 @@ namespace Ark.Models
         [Column("Id")]
         public long Id { get; set; }
 
-        string name = null!;
+        private string name = null!;
         [Column("Name")]
-        public string Name {
+        public string Name
+        {
             get { return name; }
             set
             {
@@ -24,19 +25,19 @@ namespace Ark.Models
             }
         }
 
-        string path = null!;
-        [Column("Path")]
-        public string Path
+        private string fullPath = null!;
+        [Column("FullPath")]
+        public string FullPath
         {
-            get { return path; }
+            get { return fullPath; }
             set
             {
-                path = value;
-                OnPropertyChanged(nameof(Path));
+                fullPath = value;
+                OnPropertyChanged(nameof(FullPath));
             }
         }
 
-        string extension = null!;
+        private string extension = null!;
         [Column("Extension")]
         public string Extension
         {
@@ -50,12 +51,13 @@ namespace Ark.Models
 
         [JsonIgnore]
         [Column("Bytes")]
-        public FileStream? BytesStream { get; set; }
+        public FileStream BytesStream { get; set; } = null!;
 
-        string? text;
+        private string? text;
         [JsonIgnore]
         [Column("Text")]
-        public string? Text {
+        public string? Text
+        {
             get { return text; }
             set
             {
@@ -64,7 +66,20 @@ namespace Ark.Models
             }
         }
 
-        string? foundText;
+
+        private long sourceId;
+        [Column("SourceId")]
+        public long SourceId
+        {
+            get { return sourceId; }
+            set
+            {
+                sourceId = value;
+                OnPropertyChanged(nameof(SourceId));
+            }
+        }
+
+        private string? foundText;
         [JsonIgnore]
         public string? FoundText
         {
@@ -76,15 +91,15 @@ namespace Ark.Models
             }
         }
 
-        private bool isSelected;
+        private bool isChecked;
         [JsonIgnore]
-        public bool IsSelected
+        public bool IsChecked
         {
-            get { return isSelected; }
+            get { return isChecked; }
             set
             {
-                isSelected = value;
-                OnPropertyChanged(nameof(IsSelected));
+                isChecked = value;
+                OnPropertyChanged(nameof(IsChecked));
             }
         }
 

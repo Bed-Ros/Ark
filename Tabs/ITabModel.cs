@@ -1,4 +1,5 @@
-﻿using System.Windows.Controls;
+﻿using System.Threading.Tasks;
+using System.Windows.Controls;
 
 namespace Ark.Tabs
 {

@@ -1,9 +1,9 @@
-﻿<Window x:Class="Ark.Tabs.Upload.SupportedFiles"
+﻿<Window x:Class="Ark.UI.Upload.SupportedFiles"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Ark.Tabs.Upload"
+        xmlns:local="clr-namespace:Ark.UI.Upload"
         mc:Ignorable="d"
         FontSize="14" 
         Title="Поддерживаемые файлы" 
@@ -19,7 +19,8 @@
                    Grid.Row="0"
                    Text="   Данная программа может загрузить любой файл, но преобразовать в текст может только следующие типы файлов:"/>
         <TreeView Name="FilesTreeView"
-                  Grid.Row="1" BorderBrush="{x:Null}" >            
+                  Grid.Row="1" 
+                  BorderBrush="{x:Null}" >            
         </TreeView>
 
     </Grid>

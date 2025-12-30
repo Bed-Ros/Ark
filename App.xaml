@@ -5,6 +5,9 @@
              StartupUri="MainWindow.xaml" 
              Exit="Application_Exit">
     <Application.Resources>
-         
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
     </Application.Resources>
 </Application>

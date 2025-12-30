@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace Ark.Tabs.Upload
+namespace Ark.UI.Upload
 {
     public partial class SupportedFiles : Window
     {
